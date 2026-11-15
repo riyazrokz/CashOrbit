@@ -1,0 +1,12 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "CashOrbit",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "CashOrbit Expense Tracker",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "/CashOrbit/"
+}
