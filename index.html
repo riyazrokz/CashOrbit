@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CashOrbit Expense Tracker</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --income: #16a34a;
+            --expense: #dc2626;
+            --border: #e2e8f0;
+            --loan: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 75px;
+        }
+
+        /* Secure Login / Setup Screen */
+        #loginScreen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: var(--card);
+            padding: 30px 20px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .login-box h2 { margin-bottom: 15px; color: var(--primary); }
+        .login-box input, .login-box select {
+            width: 100%; padding: 12px; margin-bottom: 12px;
+            border: 1px solid var(--border); border-radius: 10px; font-size: 1rem; background: #f8fafc; outline: none;
+        }
+        .login-box button {
+            width: 100%; padding: 12px; background: var(--primary); color: white;
+            border: none; border-radius: 10px; font-weight: 600; cursor: pointer;
+        }
+
+        /* Status Toast Message Box */
+        #statusMsg {
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            min-height: 20px;
+            display: none;
+            padding: 6px;
+            border-radius: 6px;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 { font-size: 0.95rem; font-weight: 700; }
+        .header-controls { display: flex; align-items: center; gap: 4px; }
+        
+        /* Fixed Header Dropdown Styling (Removed White Background Issue) */
+        .header-select {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            color: white !important;
+            padding: 4px 5px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        .header-select option {
+            background: #1e293b;
+            color: white;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; padding: 4px 5px; border-radius: 6px;
+            font-size: 0.7rem; font-weight: 600; cursor: pointer;
+        }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 16px; }
+
+        /* Dashboard Cards */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .balance-title { font-size: 0.8rem; color: #64748b; text-transform: uppercase; }
+        .balance-amount { font-size: 2rem; font-weight: 800; margin: 6px 0 12px; color: var(--text); }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .sub-box { background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid var(--border); }
+        .sub-box span { font-size: 0.75rem; color: #64748b; display: block; }
+        .sub-box b { font-size: 0.95rem; }
+
+        .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .form-group { margin-bottom: 10px; }
+        input, select {
+            width: 100%; padding: 10px; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 0.95rem; background: #f8fafc; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--primary); background: #fff; }
+
+        .btn-submit {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 12px; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 6px;
+        }
+
+        .item-list { list-style: none; max-height: 200px; overflow-y: auto; }
+        .item-row {
+            background: #fff; padding: 10px 12px; border-radius: 10px;
+            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid var(--border); font-size: 0.9rem;
+        }
+        .del-btn { background: #fee2e2; color: #dc2626; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+
+        .banner-ad {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 50px;
+            background: #e2e8f0; display: flex; justify-content: center; align-items: center;
+            font-size: 0.75rem; color: #475569; font-weight: 600; border-top: 1px solid #cbd5e1; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Secure Login / Setup Screen -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h2 id="loginTitle">CashOrbit Secure</h2>
+            <p id="loginDesc" style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Enter your 4-digit PIN</p>
+            
+            <div id="statusMsg"></div>
+
+            <input type="password" id="pinInput" placeholder="Enter 4-digit PIN" maxlength="4">
+            
+            <!-- Confirm PIN input -->
+            <div id="confirmPinDiv" style="display:none;">
+                <input type="password" id="confirmPinInput" placeholder="Confirm 4-digit PIN" maxlength="4">
+            </div>
+
+            <!-- Security Question setup (Shown only on first setup or recovery) -->
+            <div id="setupSecQDiv" style="display:none;">
+                <select id="secQuestion">
+                    <option value="What is your favorite food?">What is your favorite food?</option>
+                    <option value="What is your pet's name?">What is your pet's name?</option>
+                    <option value="What is your childhood nickname?">What is your childhood nickname?</option>
+                </select>
+                <input type="text" id="secAnswerInput" placeholder="Enter your Secret Answer">
+            </div>
+
+            <button id="loginBtn" onclick="handleLogin()">Login / Unlock</button>
+            <p id="forgotPinLink" style="font-size: 0.8rem; color: var(--primary); margin-top: 10px; cursor: pointer; text-decoration: underline;" onclick="showForgotPin()">Forgot PIN?</p>
+        </div>
+    </div>
+
+    <header>
+        <h1 id="appTitle">CashOrbit</h1>
+        <div class="header-controls">
+            <!-- Language Select -->
+            <select id="langSelect" class="header-select" onchange="changeLanguage()">
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+                <option value="hi">हिन्दी</option>
+                <option value="ta">தமிழ்</option>
+                <option value="ar">العربية</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+            </select>
+            <!-- Currency Select -->
+            <select id="currencySelect" class="header-select" onchange="updateCurrency()">
+                <option value="₹">₹ INR</option>
+                <option value="$">$ USD</option>
+                <option value="€">€ EUR</option>
+                <option value="£">£ GBP</option>
+                <option value="AED ">AED</option>
+                <option value="SAR ">SAR</option>
+                <option value="QAR ">QAR</option>
+            </select>
+            <!-- Sound Toggle -->
+            <button class="action-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+            <button class="action-btn" onclick="handleLogout()">Lock</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Main Dashboard Card -->
+        <div class="card" style="text-align: center;">
+            <div class="balance-title" id="lblNetBalance">Total Net Balance</div>
+            <div class="balance-amount" id="totalNetBalance">₹0.00</div>
+            <div class="grid-2">
+                <div class="sub-box">
+                    <span id="lblIncome">Total Income</span>
+                    <b id="totalIncomeDisplay" style="color: var(--income);">₹0.00</b>
+                </div>
+                <div class="sub-box">
+                    <span id="lblExpense">Total Expense</span>
+                    <b id="totalExpenseDisplay" style="color: var(--expense);">₹0.00</b>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. Daily Income & Expense Manager -->
+        <div class="card">
+            <div class="section-title"><span id="lblTxnTitle">💸 Daily Income & Expense</span></div>
+            <div class="form-group">
+                <select id="txnCategory">
+                    <option value="General">Select Category</option>
+                    <option value="Food">Food & Dining</option>
+                    <option value="Grocery">Grocery</option>
+                    <option value="Bills">Bills & Utilities</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group"><input type="text" id="txnDesc" placeholder="Description (e.g. Hotel bill)"></div>
+            <div class="grid-2" style="margin-bottom:0;">
+                <div class="form-group"><input type="number" id="txnAmount" placeholder="Amount"></div>
+                <div class="form-group">
+                    <select id="txnType">
+                        <option value="income" id="optInc">Income (+)</option>
+                        <option value="expense" id="optExp">Expense (-)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-submit" id="btnAddTxn" onclick="addTransaction()">Add Transaction</button>
+            
+            <div class="form-group" style="margin-top: 15px;">
+                <input type="text" id="searchTxn" placeholder="🔍 Search transactions..." oninput="render()">
+            </div>
+            
+            <ul id="txnList" class="item-list" style="margin-top: 10px;"></ul>
+        </div>
+
+        <!-- 2. Bank Accounts Manager -->
+        <div class="card">
+            <div class="section-title"><span id="lblBankTitle">🏦 Bank Accounts & Cash</span></div>
+            <div class="form-group"><input type="text" id="bankName" placeholder="Account Name (e.g. Federal Bank)"></div>
+            <div class="form-group"><input type="number" id="bankBalance" placeholder="Current Balance"></div>
+            <button class="btn-submit" id="btnAddBank" onclick="addBankAccount()">Add Bank / Cash Account</button>
+            <ul id="bankList" class="item-list" style="margin-top: 12px;"></ul>
+        </div>
+
+        <!-- 3. Loans & Due Dates Manager -->
+        <div class="card">
+            <div class="section-title"><span id="lblLoanTitle">📋 Loans & Due Reminders</span></div>
+            <div class="form-group"><input type="text" id="loanName" placeholder="Loan / Person Name"></div>
+            <div class="grid-2" style="margin-bottom:0;">
+                <div class="form-group"><input type="number" id="loanAmount" placeholder="Due Amount"></div>
+                <div class="form-group"><input type="date" id="loanDate"></div>
+            </div>
+            <button class="btn-submit" id="btnAddLoan" onclick="addLoan()" style="background: var(--loan);">Add Loan / Due</button>
+            <ul id="loanList" class="item-list" style="margin-top: 12px;"></ul>
+        </div>
+
+        <!-- 4. Receivables & Others Money -->
+        <div class="card">
+            <div class="section-title"><span id="lblRecTitle">🔄 Pending Receivables</span></div>
+            <div class="form-group"><input type="text" id="recName" placeholder="From Whom (Name)"></div>
+            <div class="form-group"><input type="number" id="recAmount" placeholder="Amount to Receive"></div>
+            <button class="btn-submit" id="btnAddRec" onclick="addReceivable()">Add Receivable</button>
+            <ul id="recList" class="item-list" style="margin-top: 12px;"></ul>
+        </div>
+
+        <!-- 5. Change PIN Settings Card -->
+        <div class="card">
+            <div class="section-title"><span id="lblPinTitle">🔒 Change PIN Code</span></div>
+            <div class="form-group"><input type="password" id="oldPin" placeholder="Enter Old PIN" maxlength="4"></div>
+            <div class="form-group"><input type="password" id="newPin" placeholder="Enter New 4-digit PIN" maxlength="4"></div>
+            <div class="form-group"><input type="password" id="confirmNewPin" placeholder="Confirm New 4-digit PIN" maxlength="4"></div>
+            <button class="btn-submit" id="btnChangePin" onclick="changePinCode()">Update PIN</button>
+        </div>
+    </div>
+
+    <div class="banner-ad">[ AdMob Banner Ad Area - 320x50 ]</div>
+
+    <script>
+        let currency = localStorage.getItem('co_curr') || '₹';
+        let lang = localStorage.getItem('co_lang') || 'en';
+        let soundEnabled = localStorage.getItem('co_sound') !== 'false';
+        
+        let savedPin = localStorage.getItem('co_user_pin');
+        let savedAns = localStorage.getItem('co_user_ans');
+        let isSettingUp = !savedPin;
+        let isRecovering = false;
+
+        document.getElementById('currencySelect').value = currency;
+        document.getElementById('langSelect').value = lang;
+        document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
+
+        if (isSettingUp) {
+            document.getElementById('loginTitle').innerText = "Setup New PIN";
+            document.getElementById('loginDesc').innerText = "Create PIN, Confirm PIN & Security Question";
+            document.getElementById('confirmPinDiv').style.display = 'block';
+            document.getElementById('setupSecQDiv').style.display = 'block';
+            document.getElementById('loginBtn').innerText = "Set PIN & Start";
+            document.getElementById('forgotPinLink').style.display = 'none';
+        } else {
+            document.getElementById('forgotPinLink').style.display = 'block';
+        }
+
+        let db = JSON.parse(localStorage.getItem('co_db_colored_lock')) || {
+            txns: [],
+            banks: [],
+            loans: [],
+            receivables: []
+        };
+
+        const texts = {
+            en: {
+                netBal: "Total Net Balance",
+                income: "Total Income",
+                expense: "Total Expense",
+                txnTitle: "💸 Daily Income & Expense",
+                bankTitle: "🏦 Bank Accounts & Cash",
+                loanTitle: "📋 Loans & Due Reminders",
+                recTitle: "🔄 Pending Receivables",
+                pinTitle: "🔒 Change PIN Code",
+                addTxn: "Add Transaction",
+                addBank: "Add Bank / Cash Account",
+                addLoan: "Add Loan / Due",
+                addRec: "Add Receivable",
+                incOpt: "Income (+)",
+                expOpt: "Expense (-)"
+            },
+            ml: {
+                netBal: "ആകെ ബാക്കി തുക",
+                income: "ആകെ വരവ്",
+                expense: "ആകെ ചെലവ്",
+                txnTitle: "💸 വരവും ചെലവും",
+                bankTitle: "🏦 ബാങ്ക് അക്കൗണ്ടുകൾ & ക്യാഷ്",
+                loanTitle: "📋 ലോണുകളും ഡ്യൂ തീയതികളും",
+                recTitle: "🔄 കിട്ടാനുള്ള പണം",
+                pinTitle: "🔒 പിൻ നമ്പർ മാറ്റുക",
+                addTxn: "കണക്ക് ചേർക്കുക",
+                addBank: "ബാങ്ക് അക്കൗണ്ട് ചേർക്കുക",
+                addLoan: "ലോൺ / ഡ്യൂ ചേർക്കുക",
+                addRec: "കിട്ടാനുള്ള തുക ചേർക്കുക",
+                incOpt: "വരവ് (+)",
+                expOpt: "ചെലവ് (-)"
+            },
+            hi: {
+                netBal: "कुल शेष राशि",
+                income: "कुल आय",
+                expense: "कुल खर्च",
+                txnTitle: "💸 दैनिक आय और व्यय",
+                bankTitle: "🏦 बैंक खाते और नकद",
+                loanTitle: "📋 ऋण और देय तिथियां",
+                recTitle: "🔄 प्राप्त होने वाली राशि",
+                pinTitle: "🔒 पिन कोड बदलें",
+                addTxn: "लेनदेन जोड़ें",
+                addBank: "बैंक खाता जोड़ें",
+                addLoan: "ऋण जोड़ें",
+                addRec: "प्राप्त राशि जोड़ें",
+                incOpt: "आय (+)",
+                expOpt: "खर्च (-)"
+            },
+            ta: {
+                netBal: "மொத்த இருப்பு",
+                income: "மொத்த வருமானம்",
+                expense: "மொத்த செலவு",
+                txnTitle: "💸 வரவு மற்றும் செலவு",
+                bankTitle: "🏦 வங்கி கணக்குகள்",
+                loanTitle: "📋 கடன் நினைவூட்டல்கள்",
+                recTitle: "🔄 வர வேண்டிய தொகை",
+                pinTitle: "🔒 பின் எண்ணை மாற்றவும்",
+                addTxn: "சேர்க்கவும்",
+                addBank: "வங்கி கணக்கை சேர்க்கவும்",
+                addLoan: "கடன் சேர்க்கவும்",
+                addRec: "பெற வேண்டியதை சேர்க்கவும்",
+                incOpt: "வருமானம் (+)",
+                expOpt: "செலவு (-)"
+            },
+            ar: {
+                netBal: "إجمالي الرصيد الصافي",
+                income: "إجمالي الدخل",
+                expense: "إجمالي المصروفات",
+                txnTitle: "💸 الدخل والمصروفات اليومية",
+                bankTitle: "🏦 الحسابات البنكية",
+                loanTitle: "📋 القروض والمواعيد",
+                recTitle: "🔄 المبالغ المستحقة",
+                pinTitle: "🔒 تغيير رمز السري",
+                addTxn: "إضافة معاملة",
+                addBank: "إضافة حساب",
+                addLoan: "إضافة قرض",
+                addRec: "إضافة مبلغ مستحق",
+                incOpt: "دخل (+)",
+                expOpt: "مصروف (-)"
+            },
+            es: {
+                netBal: "Balance Neto Total",
+                income: "Ingresos Totales",
+                expense: "Gastos Totales",
+                txnTitle: "💸 Ingresos y Gastos",
+                bankTitle: "🏦 Cuentas Bancarias",
+                loanTitle: "📋 Préstamos y Vencimientos",
+                recTitle: "🔄 Cuentas por Cobrar",
+                pinTitle: "🔒 Cambiar PIN",
+                addTxn: "Añadir Transacción",
+                addBank: "Añadir Banco",
+                addLoan: "Añadir Préstamo",
+                addRec: "Añadir por Cobrar",
+                incOpt: "Ingreso (+)",
+                expOpt: "Gasto (-)"
+            },
+            fr: {
+                netBal: "Solde Net Total",
+                income: "Revenu Total",
+                expense: "Dépense Totale",
+                txnTitle: "💸 Revenus et Dépenses",
+                bankTitle: "🏦 Comptes Bancaires",
+                loanTitle: "📋 Prêts et Échéances",
+                recTitle: "🔄 Créances en Attente",
+                pinTitle: "🔒 Changer le PIN",
+                addTxn: "Ajouter Transaction",
+                addBank: "Ajouter Banque",
+                addLoan: "Ajouter Prêt",
+                addRec: "Ajouter Créance",
+                incOpt: "Revenu (+)",
+                expOpt: "Dépense (-)"
+            },
+            de: {
+                netBal: "Gesamtsaldo",
+                income: "Gesamteinnahmen",
+                expense: "Gesamtausgaben",
+                txnTitle: "💸 Einnahmen & Ausgaben",
+                bankTitle: "🏦 Bankkonten",
+                loanTitle: "📋 Kredite & Fälligkeiten",
+                recTitle: "🔄 Ausstehende Forderungen",
+                pinTitle: "🔒 Transaktion hinzufügen",
+                addTxn: "Transaktion hinzufügen",
+                addBank: "Bankkonto hinzufügen",
+                addLoan: "Kredit hinzufügen",
+                addRec: "Forderung hinzufügen",
+                incOpt: "Einnahme (+)",
+                expOpt: "Ausgabe (-)"
+            }
+        };
+
+        function showMessage(msg, isSuccess) {
+            const box = document.getElementById('statusMsg');
+            box.style.display = 'block';
+            box.innerText = msg;
+            box.style.color = isSuccess ? '#16a34a' : '#dc2626';
+            box.style.background = isSuccess ? '#dcfce7' : '#fee2e2';
+        }
+
+        function applyLanguage() {
+            const t = texts[lang] || texts['en'];
+            document.getElementById('lblNetBalance').innerText = t.netBal;
+            document.getElementById('lblIncome').innerText = t.income;
+            document.getElementById('lblExpense').innerText = t.expense;
+            document.getElementById('lblTxnTitle').innerText = t.txnTitle;
+            document.getElementById('lblBankTitle').innerText = t.bankTitle;
+            document.getElementById('lblLoanTitle').innerText = t.loanTitle;
+            document.getElementById('lblRecTitle').innerText = t.recTitle;
+            document.getElementById('lblPinTitle').innerText = t.pinTitle;
+            document.getElementById('btnAddTxn').innerText = t.addTxn;
+            document.getElementById('btnAddBank').innerText = t.addBank;
+            document.getElementById('btnAddLoan').innerText = t.addLoan;
+            document.getElementById('btnAddRec').innerText = t.addRec;
+            document.getElementById('btnChangePin').innerText = t.pinTitle;
+            document.getElementById('optInc').innerText = t.incOpt;
+            document.getElementById('optExp').innerText = t.expOpt;
+        }
+
+        function changeLanguage() {
+            lang = document.getElementById('langSelect').value;
+            localStorage.setItem('co_lang', lang);
+            applyLanguage();
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('co_sound', soundEnabled);
+            document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        function playBeep() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 600;
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        function showForgotPin() {
+            isRecovering = true;
+            const q = localStorage.getItem('co_user_q') || "What is your favorite food?";
+            document.getElementById('loginTitle').innerText = "Owner Recovery";
+            document.getElementById('loginDesc').innerText = q;
+            document.getElementById('pinInput').style.display = 'none';
+            document.getElementById('confirmPinDiv').style.display = 'none';
+            document.getElementById('setupSecQDiv').style.display = 'block';
+            document.getElementById('secQuestion').style.display = 'none';
+            document.getElementById('secAnswerInput').placeholder = "Enter your Secret Answer";
+            document.getElementById('loginBtn').innerText = "Verify Answer & Reset PIN";
+            document.getElementById('forgotPinLink').style.display = 'none';
+            document.getElementById('statusMsg').style.display = 'none';
+        }
+
+        function handleLogin() {
+            if (isRecovering) {
+                const ansAttempt = document.getElementById('secAnswerInput').value.trim().toLowerCase();
+                if (ansAttempt === savedAns) {
+                    showMessage("Security Answer verified! Now set new PIN.", true);
+                    isRecovering = false;
+                    isSettingUp = true;
+                    document.getElementById('loginTitle').innerText = "Setup New PIN";
+                    document.getElementById('loginDesc').innerText = "Enter & Confirm New 4-digit PIN";
+                    document.getElementById('pinInput').style.display = 'block';
+                    document.getElementById('confirmPinDiv').style.display = 'block';
+                    document.getElementById('pinInput').value = '';
+                    document.getElementById('confirmPinInput').value = '';
+                    document.getElementById('secQuestion').style.display = 'block';
+                    document.getElementById('secAnswerInput').value = '';
+                    document.getElementById('secAnswerInput').placeholder = "Enter new Secret Answer";
+                    document.getElementById('loginBtn').innerText = "Save New PIN";
+                } else {
+                    showMessage("Incorrect Answer! Access denied.", false);
+                }
+                return;
+            }
+
+            const pin = document.getElementById('pinInput').value;
+            if (isSettingUp) {
+                const confirmPin = document.getElementById('confirmPinInput').value;
+                const question = document.getElementById('secQuestion').value;
+                const answer = document.getElementById('secAnswerInput').value.trim().toLowerCase();
+
+                if (pin.length !== 4 || pin !== confirmPin) {
+                    showMessage("PINs do not match or invalid 4-digit PIN!", false);
+                    return;
+                }
+                if (!answer) {
+                    showMessage("Please provide a security answer!", false);
+                    return;
+                }
+
+                localStorage.setItem('co_user_pin', pin);
+                localStorage.setItem('co_user_q', question);
+                localStorage.setItem('co_user_ans', answer);
+                savedPin = pin;
+                savedAns = answer;
+                isSettingUp = false;
+                playBeep();
+                document.getElementById('loginScreen').style.display = 'none';
+                showMessage("Setup completed successfully!", true);
+            } else {
+                if (pin === savedPin) {
+                    playBeep();
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('pinInput').value = '';
+                    document.getElementById('statusMsg').style.display = 'none';
+                } else {
+                    showMessage("Wrong PIN! Try again.", false);
+                    document.getElementById('pinInput').value = '';
+                }
+            }
+        }
+
+        function changePinCode() {
+            const oldP = document.getElementById('oldPin').value;
+            const newP = document.getElementById('newPin').value;
+            const confirmNewP = document.getElementById('confirmNewPin').value;
+
+            if (oldP !== savedPin) {
+                alert('Incorrect Old PIN! Only owner can change it.');
+                return;
+            }
+            if (newP.length !== 4 || newP !== confirmNewP) {
+                alert('New PINs do not match or not 4 digits!');
+                return;
+            }
+
+            localStorage.setItem('co_user_pin', newP);
+            savedPin = newP;
+            document.getElementById('oldPin').value = '';
+            document.getElementById('newPin').value = '';
+            document.getElementById('confirmNewPin').value = '';
+            alert('PIN updated successfully!');
+        }
+
+        function handleLogout() {
+            document.getElementById('pinInput').value = '';
+            document.getElementById('confirmPinInput').value = '';
+            document.getElementById('secAnswerInput').value = '';
+            document.getElementById('pinInput').style.display = 'block';
+            document.getElementById('confirmPinDiv').style.display = 'none';
+            document.getElementById('setupSecQDiv').style.display = 'none';
+            document.getElementById('loginTitle').innerText = "CashOrbit Secure";
+            document.getElementById('loginDesc').innerText = "Enter your 4-digit PIN";
+            document.getElementById('loginBtn').innerText = "Login / Unlock";
+            document.getElementById('forgotPinLink').style.display = 'block';
+            document.getElementById('statusMsg').style.display = 'none';
+            isSettingUp = false;
+            isRecovering = false;
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        function saveData() {
+            localStorage.setItem('co_db_colored_lock', JSON.stringify(db));
+            playBeep();
+            render();
+        }
+
+        function updateCurrency() {
+            currency = document.getElementById('currencySelect').value;
+            localStorage.setItem('co_curr', currency);
+            render();
+        }
+
+        function addTransaction() {
+            const category = document.getElementById('txnCategory').value;
+            const desc = document.getElementById('txnDesc').value.trim() || category;
+            const amount = parseFloat(document.getElementById('txnAmount').value);
+            const type = document.getElementById('txnType').value;
+            if(isNaN(amount)) return alert('Enter valid amount');
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            db.txns.push({ category, desc, amount, type, date: dateStr });
+            document.getElementById('txnDesc').value = '';
+            document.getElementById('txnAmount').value = '';
+            saveData();
+        }
+
+        function addBankAccount() {
+            const name = document.getElementById('bankName').value.trim();
+            const bal = parseFloat(document.getElementById('bankBalance').value);
+            if(!name || isNaN(bal)) return alert('Enter valid account name and balance');
+            db.banks.push({ name, bal });
+            document.getElementById('bankName').value = '';
+            document.getElementById('bankBalance').value = '';
+            saveData();
+        }
+
+        function addLoan() {
+            const name = document.getElementById('loanName').value.trim();
+            const amount = parseFloat(document.getElementById('loanAmount').value);
+            const date = document.getElementById('loanDate').value;
+            if(!name || isNaN(amount) || !date) return alert('Enter valid loan details');
+            db.loans.push({ name, amount, date });
+            document.getElementById('loanName').value = '';
+            document.getElementById('loanAmount').value = '';
+            document.getElementById('loanDate').value = '';
+            saveData();
+        }
+
+        function addReceivable() {
+            const name = document.getElementById('recName').value.trim();
+            const amount = parseFloat(document.getElementById('recAmount').value);
+            if(!name || isNaN(amount)) return alert('Enter valid details');
+            db.receivables.push({ name, amount });
+            document.getElementById('recName').value = '';
+            document.getElementById('recAmount').value = '';
+            saveData();
+        }
+
+        function deleteItem(type, index) {
+            db[type].splice(index, 1);
+            saveData();
+        }
+
+        function render() {
+            let totalInc = 0;
+            let totalExp = 0;
+            let totalBank = 0;
+            let totalLoanAmt = 0;
+            let totalRec = 0;
+
+            const searchQuery = document.getElementById('searchTxn').value.toLowerCase();
+            const txnList = document.getElementById('txnList');
+            txnList.innerHTML = '';
+
+            db.txns.forEach((t, idx) => {
+                if(t.type === 'income') totalInc += t.amount;
+                else totalExp += t.amount;
+
+                if(searchQuery && !t.desc.toLowerCase().includes(searchQuery) && !t.category.toLowerCase().includes(searchQuery)) {
+                    return;
+                }
+
+                const color = t.type === 'income' ? 'var(--income)' : 'var(--expense)';
+                const sign = t.type === 'income' ? '+' : '-';
+                
+                txnList.innerHTML += `
+                    <li class="item-row">
+                        <span>
+                            <b>[${t.category}]</b> ${t.desc}<br>
+                            <small style="color:#64748b;">📅 ${t.date || 'N/A'}</small>
+                        </span>
+                        <span style="color:${color}; font-weight:600; text-align:right;">
+                            ${sign}${currency}${t.amount.toFixed(2)} 
+                            <button class="del-btn" onclick="deleteItem('txns', ${idx})" style="margin-left:8px;">X</button>
+                        </span>
+                    </li>`;
+            });
+
+            const bankList = document.getElementById('bankList');
+            bankList.innerHTML = '';
+            db.banks.forEach((b, idx) => {
+                totalBank += b.bal;
+                bankList.innerHTML += `<li class="item-row"><span><b>${b.name}</b></span><span>${currency}${b.bal.toFixed(2)} <button class="del-btn" onclick="deleteItem('banks', ${idx})">X</button></span></li>`;
+            });
+
+            const loanList = document.getElementById('loanList');
+            loanList.innerHTML = '';
+            db.loans.forEach((l, idx) => {
+                totalLoanAmt += l.amount;
+                loanList.innerHTML += `<li class="item-row"><span><b>${l.name}</b><br><small style="color:var(--loan);">Due: ${l.date}</small></span><span>${currency}${l.amount.toFixed(2)} <button class="del-btn" onclick="deleteItem('loans', ${idx})">X</button></span></li>`;
+            });
+
+            const recList = document.getElementById('recList');
+            recList.innerHTML = '';
+            db.receivables.forEach((r, idx) => {
+                totalRec += r.amount;
+                recList.innerHTML += `<li class="item-row"><span><b>${r.name}</b></span><span>${currency}${r.amount.toFixed(2)} <button class="del-btn" onclick="deleteItem('receivables', ${idx})">X</button></span></li>`;
+            });
+
+            document.getElementById('totalIncomeDisplay').innerText = `${currency}${totalInc.toFixed(2)}`;
+            document.getElementById('totalExpenseDisplay').innerText = `${currency}${totalExp.toFixed(2)}`;
+            
+            let net = (totalInc - totalExp) + totalBank + totalRec - totalLoanAmt;
+            document.getElementById('totalNetBalance').innerText = `${currency}${net.toFixed(2)}`;
+        }
+
+        applyLanguage();
+        render();
+    </script>
+</body>
+</html>
+
