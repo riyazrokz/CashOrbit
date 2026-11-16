@@ -257,15 +257,19 @@
 
             <input type="password" id="pinInput" placeholder="Enter 4-digit PIN" maxlength="4">
             
-            <div id="confirmPinDiv" style="display:none;">
-                <input type="password" id="confirmPinInput" placeholder="Confirm 4-digit PIN" maxlength="4">
+            <div id="confirmPinDiv" style="display:none; position: relative;">
+                <input type="password" id="confirmPinInput" placeholder="Confirm 4-digit PIN" maxlength="4" style="padding-right: 40px;">
+                <span onclick="togglePinVisibility('confirmPinInput', 'confirmEyeIcon')" style="position: absolute; right: 12px; top: 38%; transform: translateY(-50%); cursor: pointer; font-size: 18px;" id="confirmEyeIcon">👁️‍🗨️</span>
             </div>
 
             <div id="setupSecQDiv" style="display:none;">
-                <select id="secQuestion">
-                    <option value="What is your favorite food?">What is your favorite food?</option>
-                    <option value="What is your pet's name?">What is your pet's name?</option>
-                    <option value="What is your childhood nickname?">What is your childhood nickname?</option>
+                <select id="secQuestion" style="border: 2px solid #6366f1; border-radius: 10px; font-weight: 600; background: linear-gradient(135deg, #e0e7ff 0%, #fae8ff 100%); color: #1e1b4b;">
+                    <option value="What is your favorite food?">🍔 What is your favorite food?</option>
+                    <option value="What is your favorite movie?">🎬 What is your favorite movie?</option>
+                    <option value="Who is your favorite sports player?">⚽ Who is your favorite sports player?</option>
+                    <option value="What was the name of your first school?">🏫 What was the name of your first school?</option>
+                    <option value="What was the name of your first pet?">🐾 What was the name of your first pet?</option>
+                    <option value="In which city were you born?">🏙️ In which city were you born?</option>
                 </select>
                 <input type="text" id="secAnswerInput" placeholder="Enter your Secret Answer">
             </div>
@@ -449,6 +453,18 @@
             fr: { netBal: "Solde Net Total", income: "Revenu Total", expense: "Dépense Totale", txnTitle: "💸 Revenus et Dépenses", bankTitle: "🏦 Comptes Bancaires", loanTitle: "📋 Prêts et Échéances", recTitle: "🔄 Créances en Attente", addTxn: "Ajouter Transaction", addBank: "Ajouter Banque", addLoan: "Ajouter Prêt", addRec: "Ajouter Créance", incOpt: "Revenu (+)", expOpt: "Dépense (-)", tabTxn: "💸 Quotidien", tabBank: "🏦 Banques", tabLoan: "📋 Prêts", tabRec: "🔄 Attente" },
             de: { netBal: "Gesamtsaldo", income: "Gesamteinnahmen", expense: "Gesamtausgaben", txnTitle: "💸 Einnahmen & Ausgaben", bankTitle: "🏦 Bankkonten", loanTitle: "📋 Kredite & Fälligkeiten", recTitle: "🔄 Ausstehende Forderungen", addTxn: "Transaktion hinzufügen", addBank: "Bankkonto hinzufügen", addLoan: "Kredit hinzufügen", addRec: "Forderung hinzufügen", incOpt: "Einnahme (+)", expOpt: "Ausgabe (-)", tabTxn: "💸 Täglich", tabBank: "🏦 Banken", tabLoan: "📋 Kredite", tabRec: "🔄 Offen" }
         };
+
+        function togglePinVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "👁️";
+            } else {
+                input.type = "password";
+                icon.textContent = "👁️‍🗨️";
+            }
+        }
 
         function switchTab(tabId, btnElement) {
             document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
@@ -835,4 +851,3 @@
     </script>
 </body>
 </html>
-
